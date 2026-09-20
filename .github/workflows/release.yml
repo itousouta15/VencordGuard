@@ -30,7 +30,7 @@ jobs:
           $version = $tag.TrimStart('v')
           go generate ./cmd/vencordguard
           go build -trimpath -ldflags="-H=windowsgui -s -w -X main.version=$version" -o build/VencordGuard.exe ./cmd/vencordguard
-          Copy-Item build/VencordGuard.exe, README.md, LICENSE -Destination dist/portable
+          Copy-Item build/VencordGuard.exe, README.md, LICENSE, THIRD_PARTY_NOTICES.md -Destination dist/portable
           Compress-Archive -Path dist/portable/* -DestinationPath "dist/VencordGuard-$version-portable.zip"
       - name: Build installer
         shell: pwsh

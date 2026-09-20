@@ -36,7 +36,7 @@ VersionInfoProductVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "chinesetraditional"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
+Name: "chinesetraditional"; MessagesFile: "languages\ChineseTraditional.isl"
 
 [CustomMessages]
 english.GuardTask=Background guard (recommended)
@@ -56,6 +56,7 @@ Name: "shortcuts"; Description: "{cm:ShortcutsTask}"; GroupDescription: "{cm:Sho
 Source: "..\build\VencordGuard.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\THIRD_PARTY_NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "VencordGuard"; ValueData: """{app}\{#MyAppExeName}"" --guard"; Tasks: guard; Flags: uninsdeletevalue
