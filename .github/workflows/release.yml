@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test
+        run: |
+          go test ./...
+          go vet ./...
+      - name: Build executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build, dist, dist/portable | Out-Null
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^v\d+\.\d+\.\d+$') { throw "Release tags must use vMAJOR.MINOR.PATCH" }
+          $version = $tag.TrimStart('v')
+          go generate ./cmd/vencordguard
+          go build -trimpath -ldflags="-H=windowsgui -s -w -X main.version=$version" -o build/VencordGuard.exe ./cmd/vencordguard
+          Copy-Item build/VencordGuard.exe, README.md, LICENSE -Destination dist/portable
+          Compress-Archive -Path dist/portable/* -DestinationPath "dist/VencordGuard-$version-portable.zip"
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --yes --no-progress }
+          & $iscc "/DMyAppVersion=$version" installer/VencordGuard.iss
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -File | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content -Encoding ascii dist/SHA256SUMS.txt
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: VencordGuard-${{ github.ref_name }}
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/*.exe dist/*.zip dist/SHA256SUMS.txt --generate-notes --title "VencordGuard ${{ github.ref_name }}"
